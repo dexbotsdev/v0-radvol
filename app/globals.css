@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 18, 18, 18;
+  --background-end-rgb: 18, 18, 18;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+
+  background: linear-gradient(140.95deg, rgba(100, 105, 112, 0.8) 2.8%, rgba(16, 21, 27, 0.8) 88.62%);
+  box-shadow: 6px 6px 55px #000000;
+  backdrop-filter: blur(12.5px);
+  /* Note: backdrop-filter has minimal browser support */
+}
+
+.leftsidebar {
+  border: 1px solid #282b31;
+  background-image: linear-gradient(127deg, #32353c 0%, rgba(0, 0, 0, 0.31) 100%);
+  filter: drop-shadow(0px 10px 12.5px rgba(12, 12, 13, 0.5));
+}
+
+.header {
+  background-color: #202227;
+
+  box-shadow: 6px 6px 55px #000000;
+  backdrop-filter: blur(12.5px);
+  /* Note: backdrop-filter has minimal browser support */
+}
+
+.rightsidebar {
+  border: 1px solid #282b31;
+  background-image: linear-gradient(127deg, #32353c 0%, rgba(0, 0, 0, 0.31) 100%);
+  filter: drop-shadow(0px 10px 12.5px rgba(12, 12, 13, 0.5));
+  /* Note: backdrop-filter has minimal browser support */
+}
+
+.iconButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: rgba(192, 202, 216, 0.2);
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+@layer base {
+  body {
+    @apply font-poppins;
+  }
+}
+
+/* Hide scrollbar but allow scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.animate-in {
+  animation-duration: 150ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.zoom-in-95 {
+  animation-name: zoomIn;
+}
+
+.duration-100 {
+  animation-duration: 100ms;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 250px;
+  }
+}
+
+/* New consistent styling classes */
+@layer components {
+  .card-gradient {
+    @apply bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/50 shadow-sm;
+  }
+
+  .compact-input {
+    @apply h-7 bg-gray-900/70 border-gray-700/50 text-xs px-2;
+  }
+
+  .compact-button {
+    @apply h-7 px-2 text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700;
+  }
+
+  .accent-button {
+    @apply bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 border border-blue-800/50;
+  }
+
+  .danger-button {
+    @apply text-red-500 hover:bg-red-900/20 hover:text-red-400;
+  }
+
+  .compact-badge {
+    @apply text-[10px] py-0 h-5 font-normal;
+  }
+
+  .compact-checkbox {
+    @apply h-3 w-3 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500;
+  }
+
+  .wallet-item {
+    @apply p-2 rounded-md flex items-center bg-gray-800/20 border border-gray-800/30 hover:bg-gray-800/30 transition-colors;
+  }
+
+  .wallet-item-selected {
+    @apply bg-gradient-to-r from-blue-900/20 to-blue-800/10 border border-blue-800/30;
+  }
+
+  .text-xs-plus {
+    @apply text-[13px];
+  }
+
+  .text-2xs {
+    @apply text-[10px];
+  }
+}
