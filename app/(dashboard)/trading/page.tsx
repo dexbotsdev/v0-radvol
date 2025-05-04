@@ -558,14 +558,15 @@ export default function TradingPage() {
 
         {/* Main content area - responsive */}
         <div className="flex-1 overflow-hidden">
-          <ChartArea
-            marketData={marketData}
-            pairData={pairData}
-            botRunning={botRunning}
-            priceHistory={priceHistory}
-            candlestickData={candlestickData}
-            strategyMode={botConfig.strategyMode}
-          />
+            <iframe
+          src="https://dexscreener.com/solana/37iwfsqgntsafshobtbzqghwsttkwazw3yvzgjwkn6ik?embed=1&theme=dark&trades=0&info=0"
+          width="100%"
+          height="500px"
+          loading="lazy"
+          title="Dexscreener Chart"
+          className="w-full"
+        >
+        </iframe> 
         </div>
 
         {/* Right sidebar - responsive */}

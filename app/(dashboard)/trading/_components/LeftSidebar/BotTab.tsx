@@ -20,7 +20,13 @@ interface BotTabProps {
   platforms: Platform[]
   selectedPlatform: string
   handleBotConfigChange: (field: keyof BotConfig, value: string | number | object) => void
-  toggleBotRunning: (platform: string, strategyMode: string, config: BotConfig) => void
+  toggleBotRunning: (
+    platform: string,
+    strategyMode: string,
+    config: BotConfig,
+    platformInfo: any,
+    poolInfo: any,
+  ) => void
   saveBotConfig: () => void
   cycleStrategyMode: (direction: "next" | "prev") => void
   cyclePlatform: (direction: "next" | "prev") => void
@@ -281,6 +287,8 @@ export function BotTab({
     }
   }
 
+  // Inside the BotTab component, add this code to handle the start button click:
+
   const handleStartClick = async () => {
     if (!pairSelected || !selectedPairId) {
       toast({
@@ -309,6 +317,20 @@ export function BotTab({
     // Close the dialog
     setShowVolumeDialog(false)
 
+    // Create platform info
+    const platformInfo = {
+      id: selectedPlatform,
+      name: platforms.find((p) => p.id === selectedPlatform)?.name || selectedPlatform,
+      poolOwnerPublicKey: poolOwnerInfo?.owner,
+    }
+
+    // Create pool info
+    const poolInfo = {
+      poolAddress: pairData?.pairAddress || "",
+      programId: poolOwnerInfo?.owner || "",
+      programName: poolOwnerInfo?.programName || "",
+    }
+
     // Ensure pool information is included in the config
     const finalConfig = {
       ...config,
@@ -320,7 +342,7 @@ export function BotTab({
     }
 
     // Start the bot with the updated config
-    toggleBotRunning(selectedPlatform, finalConfig.strategyMode, finalConfig)
+    toggleBotRunning(selectedPlatform, finalConfig.strategyMode, finalConfig, platformInfo, poolInfo)
   }
 
   // Function to truncate addresses for display

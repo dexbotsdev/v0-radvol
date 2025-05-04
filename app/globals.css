@@ -159,4 +159,16 @@ body {
   .text-2xs {
     @apply text-[10px];
   }
+
+  .aegis-gradient-card {
+    @apply border border-[#282b31] bg-gradient-to-b from-[#32353c] to-[rgba(0,0,0,0.31)];
+  }
+
+  .aegis-gradient-item {
+    @apply border border-[#282b31] bg-gradient-to-b from-[#2a2d36] to-[#1a1c22];
+  }
+
+  .aegis-border {
+    @apply border-[#282b31];
+  }
 }

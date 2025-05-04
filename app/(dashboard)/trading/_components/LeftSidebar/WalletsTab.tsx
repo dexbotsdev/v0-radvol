@@ -1,5 +1,5 @@
 "use client"
-import { Plus, DollarSign, Trash2, WalletIcon, AlertCircle, CheckCircle2 } from "lucide-react"
+import { Plus, DollarSign, Trash2, WalletIcon, AlertCircle } from "lucide-react"
 import type { Wallet as WalletType } from "../../types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,10 +35,10 @@ export function WalletsTab({
   const selectedCount = wallets.filter((w) => w.selected).length
 
   return (
-    <div className="p-3 relative">
+    <div className="relative">
       {botRunning && (
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-10 rounded-md">
-          <div className="bg-gradient-to-b from-gray-800/90 to-gray-900/90 p-4 rounded-lg border border-gray-700 shadow-xl max-w-[90%]">
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-10 rounded-none">
+          <div className="bg-gradient-to-b from-gray-800/90 to-gray-900/90 p-4 rounded-none border border-gray-700 shadow-xl max-w-[90%]">
             <div className="flex items-center gap-2 text-amber-400 mb-2">
               <AlertCircle className="h-4 w-4" />
               <h3 className="font-medium text-sm">Wallet Management Locked</h3>
@@ -49,7 +49,7 @@ export function WalletsTab({
       )}
 
       {/* Only show wallet counts */}
-      <div className="flex items-center justify-end mb-3">
+      <div className="flex items-center justify-end mb-3 mt-1">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-[10px] py-0 h-5 font-normal bg-gray-800/50">
             {wallets.length} total
@@ -63,7 +63,7 @@ export function WalletsTab({
       </div>
 
       {/* Compact controls */}
-      <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40 border-gray-700/50 shadow-sm mb-3">
+      <Card className="bg-gradient-to-b from-gray-800/40 to-gray-900/40  rounded-none border-gray-700/50 shadow-sm mb-3">
         <div className="p-3">
           {/* Select All and Burn row */}
           <div className="flex items-center justify-between mb-2">
@@ -107,7 +107,7 @@ export function WalletsTab({
           <div className="space-y-2">
             {/* Generate wallets row */}
             <div className="flex items-center gap-2">
-              <div className="w-16">
+              <div className="w-1/2">
                 <Input
                   id="walletGenerator"
                   type="number"
@@ -141,7 +141,7 @@ export function WalletsTab({
 
             {/* Fund wallets row with larger input field */}
             <div className="flex items-center gap-2">
-              <div className="w-24 relative">
+              <div className="w-1/2 relative">
                 <Input
                   id="fundAmount"
                   type="number"
@@ -163,11 +163,7 @@ export function WalletsTab({
                       onClick={fundWallets}
                       size="sm"
                       variant="secondary"
-                      className={`h-7 px-2 text-xs ${
-                        botRunning || !wallets.some((w) => w.selected)
-                          ? "opacity-50"
-                          : "bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 border border-blue-800/50"
-                      }`}
+                      className="h-7 px-2 text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700"
                       disabled={botRunning || !wallets.some((w) => w.selected)}
                     >
                       <DollarSign size={12} className="mr-1" />
@@ -184,68 +180,54 @@ export function WalletsTab({
         </div>
       </Card>
 
-      {/* Wallet list - increased height since search is removed */}
-      <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-1 hide-scrollbar">
-        {wallets.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-6 px-3 text-center bg-gray-800/20 rounded-lg border border-dashed border-gray-800">
-            <WalletIcon className="h-8 w-8 text-gray-600 mb-2" />
-            <p className="text-gray-400 text-xs">No wallets available</p>
-            <Button
-              onClick={generateWallets}
-              size="sm"
-              variant="ghost"
-              className="mt-2 h-7 text-xs"
-              disabled={botRunning}
-            >
-              <Plus size={12} className="mr-1" />
-              Generate Wallets
-            </Button>
+      {/* Wallet Stats Info */}
+      <div className="mt-4">
+        <div className="bg-gray-800/30 border border-gray-700/50 rounded-md p-4">
+          <h3 className="text-sm font-medium text-gray-300 mb-3">Wallet Statistics</h3>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">Generated Wallets:</span>
+              <span className="text-xs font-medium text-white bg-gray-700/50 px-2 py-1 rounded">{wallets.length}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">Funded Wallets:</span>
+              <span className="text-xs font-medium text-white bg-gray-700/50 px-2 py-1 rounded">
+                {wallets.filter((w) => Number.parseFloat(w.balance) > 0).length}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">Selected Wallets:</span>
+              <span className="text-xs font-medium text-white bg-gray-700/50 px-2 py-1 rounded">{selectedCount}</span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">Total Balance:</span>
+              <span className="text-xs font-medium text-green-400 bg-gray-700/50 px-2 py-1 rounded">
+                {wallets.reduce((sum, wallet) => sum + Number.parseFloat(wallet.balance), 0).toFixed(4)} SOL
+              </span>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-1">
-            {wallets.map((wallet) => (
-              <div
-                key={wallet.id}
-                className={`p-2 rounded-md flex items-center ${
-                  wallet.selected
-                    ? "bg-gradient-to-r from-blue-900/20 to-blue-800/10 border border-blue-800/30"
-                    : "bg-gray-800/20 border border-gray-800/30 hover:bg-gray-800/30"
-                } transition-colors`}
+
+          {wallets.length === 0 && (
+            <div className="flex flex-col items-center justify-center mt-4 py-4 px-3 text-center bg-gray-800/20 rounded-lg border border-dashed border-gray-800">
+              <WalletIcon className="h-8 w-8 text-gray-600 mb-2" />
+              <p className="text-gray-400 text-xs">No wallets available</p>
+              <Button
+                onClick={generateWallets}
+                size="sm"
+                variant="ghost"
+                className="mt-2 h-7 text-xs"
+                disabled={botRunning}
               >
-                <input
-                  type="checkbox"
-                  checked={wallet.selected}
-                  onChange={() => toggleWalletSelection(wallet.id)}
-                  className="mr-2 h-3 w-3 rounded border-gray-600 bg-gray-800 text-blue-500 focus:ring-blue-500"
-                  disabled={botRunning}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center">
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        Number.parseFloat(wallet.balance) > 0 ? "bg-green-500" : "bg-gray-500"
-                      } mr-1.5`}
-                    />
-                    <p className="text-xs font-medium text-gray-300 truncate">{wallet.address}</p>
-                  </div>
-                  <div className="flex items-center justify-between mt-0.5">
-                    <div className="flex items-center">
-                      <span className="text-[10px] text-gray-500">Balance:</span>
-                      <span
-                        className={`text-[10px] font-medium ml-1 ${
-                          Number.parseFloat(wallet.balance) > 0 ? "text-green-400" : "text-gray-400"
-                        }`}
-                      >
-                        {wallet.balance} SOL
-                      </span>
-                    </div>
-                    {wallet.selected && <CheckCircle2 className="h-3 w-3 text-blue-500" />}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <Plus size={12} className="mr-1" />
+                Generate Wallets
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

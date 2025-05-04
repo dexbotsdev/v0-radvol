@@ -89,82 +89,21 @@ export function ChartArea({ marketData, pairData, botRunning, priceHistory, stra
         ) : (
           // Active chart with data
           <div className="h-full flex flex-col">
-            <div className="flex justify-between items-center mb-2 md:mb-4">
-              <div className="text-lg md:text-2xl font-medium">
-                ${pairData ? formatPrice(pairData.priceUsd) : "0.00"}
-              </div>
-              <div className="flex items-center">
-                <div className="bg-[#1e1e1e] rounded px-2 py-1 flex items-center mr-2 text-xs md:text-sm">
-                  <span
-                    className={`${
-                      // Add null check for priceChange and h24
-                      pairData?.priceChange?.h24 && pairData.priceChange.h24 >= 0 ? "text-green-500" : "text-[#f44336]"
-                    } font-medium mr-1`}
-                  >
-                    {/* Add null check for priceChange and h24 */}
-                    {Number(pairData?.priceChange?.h24 || 0) >= 0 ? "+" : ""}
-                    {Number(pairData?.priceChange?.h24 || 0).toFixed(2)}%
-                  </span>
-                  <div className="bg-gray-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px]">
-                    {/* Add null check for priceChange and h24 */}
-                    {(pairData?.priceChange?.h24 || 0) >= 0 ? "B" : "S"}
-                  </div>
-                </div>
-              </div>
-            </div>
-
+            
             {/* Trading chart - add animation for better visual feedback */}
             <div className="flex-1 bg-[#121212] border border-[#222] rounded relative min-h-[300px] animate-in fade-in duration-300">
-              <TradingChart
-                priceHistory={priceHistory}
-                candlestickData={candlestickData}
-                isCandlestick={chartType === "candlestick"}
-              />
-
-              {/* Price labels */}
-              <div className="absolute top-2 right-2 text-xs space-y-1">
-                {priceHistory.length > 0 && (
-                  <>
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      const maxPrice = Math.max(...priceHistory.map((p) => p.price)) * 1.1
-                      const minPrice = Math.min(...priceHistory.map((p) => p.price)) * 0.9
-                      const range = maxPrice - minPrice
-                      const price = maxPrice - (range / 4) * i
-                      return <div key={i}>{formatPrice(price)}</div>
-                    })}
-                  </>
-                )}
-              </div>
-
-              {/* Time labels */}
-              <div className="absolute bottom-0 left-0 right-0 flex justify-between px-4 text-xs text-gray-400">
-                {priceHistory.length > 0 && (
-                  <>
-                    {Array.from({ length: 4 }).map((_, i) => {
-                      if (priceHistory.length < 4)
-                        return (
-                          <div key={i}>{new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
-                        )
-
-                      const index = Math.floor((priceHistory.length - 1) * (i / 3))
-                      const timestamp = priceHistory[index]?.timestamp
-                      return (
-                        <div key={i}>
-                          {new Date(timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </div>
-                      )
-                    })}
-                  </>
-                )}
-              </div>
+               <iframe
+          src="hhttps://dexscreener.com/solana/37iwfsqgntsafshobtbzqghwsttkwazw3yvzgjwkn6ik?embed=1&theme=dark&trades=0&info=0"
+          width="100%"
+          height="500px"
+          loading="lazy"
+          title="Dexscreener Chart"
+          className="w-full"
+        >
+        </iframe> 
+ 
             </div>
-
-            {/* Chart controls */}
-            <div className="flex justify-end mt-2 md:mt-4">
-              <button className="text-gray-400 hover:text-white">
-                <MoreHorizontal size={20} />
-              </button>
-            </div>
+ 
           </div>
         )}
       </div>

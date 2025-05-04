@@ -11,7 +11,7 @@ export default function StakingDashboard() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#121212] text-white font-['Segoe_UI',Montserrat,sans-serif]">
-      <div className="max-w-7xl mx-auto w-full p-4 bg-[#1a1a1a] rounded-lg shadow-lg">
+      <div className="max-w-7xl mx-auto w-full p-4 border border-[#282b31] bg-gradient-to-b from-[#32353c] to-[rgba(0,0,0,0.31)] rounded-lg shadow-lg">
         {/* Header */}
         <header className="flex justify-between items-center mb-6">
           <div className="flex items-center">
@@ -45,7 +45,7 @@ export default function StakingDashboard() {
         {/* Main content */}
         <div className="flex flex-col lg:flex-row">
           {/* Left sidebar */}
-          <div className="w-full lg:w-80 lg:pr-6 lg:border-r border-gray-800 mb-6 lg:mb-0">
+          <div className="w-full lg:w-80 lg:pr-6 lg:border-r border-[#282b31] mb-6 lg:mb-0">
             <div className="mb-6">
               <div className="text-xs text-gray-400 mb-1 uppercase tracking-wider">MAIN ACCOUNT BALANCE</div>
               <div className="text-[28px] font-bold text-[#FF8C00]">
@@ -113,7 +113,7 @@ export default function StakingDashboard() {
             </div>
 
             {/* Tabs */}
-            <div className="border-b border-gray-800 mb-6">
+            <div className="border-b border-[#282b31] mb-6">
               <div className="flex">
                 {["Overview", "Portfolio", "Financials", "Trades"].map((tab) => (
                   <button
@@ -137,7 +137,7 @@ export default function StakingDashboard() {
         </div>
 
         {/* Footer */}
-        <footer className="mt-8 pt-4 border-t border-gray-800 flex flex-col sm:flex-row justify-between text-xs text-gray-500">
+        <footer className="mt-8 pt-4 border-t border-[#282b31] flex flex-col sm:flex-row justify-between text-xs text-gray-500">
           <div>StakingAI 2023. All Rights Reserved.</div>
           <div className="flex gap-4 mt-2 sm:mt-0">
             <Link href="#" className="text-[#FF8C00] hover:text-[#FFA500]">
@@ -344,7 +344,7 @@ function AssetRow({
   allocation: string
 }) {
   return (
-    <div className="grid grid-cols-6 items-center bg-[#222222] rounded p-2">
+    <div className="grid grid-cols-6 items-center border border-[#282b31] bg-gradient-to-b from-[#2a2d36] to-[#1a1c22] rounded p-2">
       <div className="col-span-1 flex items-center">
         <div className={`w-8 h-8 ${iconBg} rounded-full flex items-center justify-center mr-2`}>
           <span className="text-white font-bold text-xs">{iconText}</span>

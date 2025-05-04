@@ -232,7 +232,16 @@ export function TradingChart({ priceHistory, candlestickData = [], isCandlestick
 
   return (
     <div className="w-full h-full relative">
-      <canvas ref={canvasRef} className="w-full h-full" style={{ width: "100%", height: "100%" }} />
+      <div className="w-full max-w-6xl">
+        <iframe
+          src="https://dexscreener.com/solana/37iwfsqgntsafshobtbzqghwsttkwazw3yvzgjwkn6ik?embed=1&theme=dark&trades=0&info=0"
+          width="100%"
+          height="500px"
+          loading="lazy"
+          title="Dexscreener Chart"
+          className="w-full"
+        />
+      </div>
     </div>
   )
 }

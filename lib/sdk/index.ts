@@ -20,3 +20,11 @@ export * from "./services/strategies/patterntrade-strategy"
 
 // Export service factory
 export * from "./services/service-factory"
+
+// Export all SDK components
+export * from "./trading-bot-sdk"
+export * from "./use-trading-bot-sdk"
+export * from "./platforms/platform-adapter"
+export * from "./platforms/raydium-adapter"
+export * from "./platforms/pumpfun-adapter"
+export * from "./platforms/pumpswap-adapter"
