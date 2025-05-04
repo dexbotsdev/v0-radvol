@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ChevronLeft, ChevronRight, Play, Square, Loader2, Search, ExternalLink } from "lucide-react"
+import { ChevronLeft, ChevronRight, Play, Square, Loader2 } from "lucide-react"
 import type { BotConfig, StrategyMode, Platform, PairData } from "../../types"
 import { VolumeCalculationDialog } from "../Dialogs/VolumeCalculationDialog"
 import { toast } from "sonner"
@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface BotTabProps {
   botConfig: BotConfig
@@ -73,6 +72,9 @@ export function BotTab({
   const [selectedPairId, setSelectedPairId] = useState<string>("")
   const [pairsLoaded, setPairsLoaded] = useState(false)
   const [pairSelected, setPairSelected] = useState(false)
+
+  // Add a new state variable for the selected platform type
+  const [selectedPlatformType, setSelectedPlatformType] = useState<string>("raydium")
 
   // Known program IDs and their names
   const KNOWN_PROGRAMS: Record<string, string> = {
@@ -290,10 +292,10 @@ export function BotTab({
   // Inside the BotTab component, add this code to handle the start button click:
 
   const handleStartClick = async () => {
-    if (!pairSelected || !selectedPairId) {
+    if (!tokenAddress) {
       toast({
         title: "Error",
-        description: "Please select a token pair first",
+        description: "Please enter a token address",
         variant: "destructive",
       })
       return
@@ -313,6 +315,7 @@ export function BotTab({
     setShowVolumeDialog(true)
   }
 
+  // Update the handleConfirmStart function to include the selected platform type
   const handleConfirmStart = () => {
     // Close the dialog
     setShowVolumeDialog(false)
@@ -321,24 +324,19 @@ export function BotTab({
     const platformInfo = {
       id: selectedPlatform,
       name: platforms.find((p) => p.id === selectedPlatform)?.name || selectedPlatform,
-      poolOwnerPublicKey: poolOwnerInfo?.owner,
+      platformType: selectedPlatformType,
     }
 
-    // Create pool info
+    // Create simplified pool info
     const poolInfo = {
-      poolAddress: pairData?.pairAddress || "",
-      programId: poolOwnerInfo?.owner || "",
-      programName: poolOwnerInfo?.programName || "",
+      tokenAddress: tokenAddress,
     }
 
-    // Ensure pool information is included in the config
+    // Ensure token address is included in the config
     const finalConfig = {
       ...config,
-      poolInfo: config.poolInfo || {
-        poolAddress: pairData?.pairAddress || "",
-        programId: poolOwnerInfo?.owner || "",
-        programName: poolOwnerInfo?.programName || "",
-      },
+      tokenAddress: tokenAddress,
+      platformType: selectedPlatformType,
     }
 
     // Start the bot with the updated config
@@ -382,297 +380,209 @@ export function BotTab({
             onChange={(e) => handleTokenAddressChange(e.target.value)}
             disabled={botRunning}
           />
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  className="compact-button w-8 px-0 flex items-center justify-center"
-                  onClick={handleLoadPairs}
-                  disabled={isLoadingState || botRunning || !tokenAddress}
-                >
-                  {isLoadingState ? <Loader2 size={12} className="animate-spin" /> : <Search size={12} />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="text-xs">
-                <p>Load token pairs</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
         </div>
       </div>
 
+      {/* Add the platform selection dropdown here: */}
+      <div className="mb-3">
+        <label htmlFor="platformType" className="block text-xs text-gray-400 mb-2">
+          Platform
+        </label>
+        <Select value={selectedPlatformType} onValueChange={setSelectedPlatformType} disabled={botRunning}>
+          <SelectTrigger id="platformType" className="compact-input bg-gray-900/70 border-gray-700/50">
+            <SelectValue placeholder="Select platform" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-900 border-gray-700 text-xs">
+            <SelectItem value="raydium" className="text-white text-xs">
+              Raydium AMM
+            </SelectItem>
+            <SelectItem value="pumpfun" className="text-white text-xs">
+              PumpFun
+            </SelectItem>
+            <SelectItem value="pumpswap" className="text-white text-xs">
+              PumpSwap
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       {/* Pair Selection Dropdown - Only show if pairs are loaded */}
-      {pairsLoaded && availablePairs.length > 0 && (
+      {/* Only show the rest of the UI if a pair is selected */}
+      {/* Strategy Selection Widget with null check */}
+      {strategyModes && strategyModes.length > 0 && (
         <Card className="card-gradient mb-3">
-          <div className="p-3 space-y-2">
-            <label htmlFor="pairSelection" className="block text-xs text-gray-400">
-              Select Pair
-            </label>
-            <Select value={selectedPairId} onValueChange={handlePairSelection} disabled={botRunning}>
-              <SelectTrigger id="pairSelection" className="compact-input bg-gray-900/70 border-gray-700/50">
-                <SelectValue placeholder="Select a trading pair" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700 text-xs">
-                {availablePairs.map((pair) => (
-                  <SelectItem key={pair.pairAddress} value={pair.pairAddress} className="text-white text-xs">
-                    {pair.baseToken.symbol}/{pair.quoteToken.symbol} ({pair.dexId})
-                    {pair.liquidity?.usd && ` - $${(pair.liquidity.usd / 1000).toFixed(1)}K`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="p-3">
+            <div className="text-xs text-gray-400 mb-1">Volume Strategy</div>
+            <div className="flex items-center justify-between bg-gray-900/50 rounded-md p-2">
+              <button
+                className="p-1 hover:bg-gray-800 rounded-md disabled:opacity-50"
+                onClick={() => cycleStrategyMode("prev")}
+                disabled={botRunning}
+              >
+                <ChevronLeft size={14} />
+              </button>
 
-            {/* Pair Pool Address and Owner Information */}
-            {pairSelected && pairData && (
-              <div className="mt-2 space-y-2">
-                <div className="text-2xs text-gray-400 space-y-0.5">
-                  <p>
-                    Price: $
-                    {Number(pairData.priceUsd).toLocaleString(undefined, {
-                      minimumFractionDigits: 6,
-                      maximumFractionDigits: 10,
-                    })}
-                  </p>
-                  <p>Liquidity: ${pairData.liquidity?.usd ? pairData.liquidity.usd.toLocaleString() : "N/A"}</p>
-                  <p>24h Volume: ${pairData.volume?.h24 ? pairData.volume.h24.toLocaleString() : "N/A"}</p>
+              <div className="flex-1 text-center">
+                <div className="text-xs font-medium" style={{ color: currentStrategy?.color || "#888" }}>
+                  {currentStrategy?.name || "Unknown Strategy"}
                 </div>
-
-                <div className="bg-gray-900/50 border border-gray-800/50 rounded-md p-2 space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xs text-gray-400">Pair Pool Address:</span>
-                    <div className="flex items-center">
-                      <span className="text-2xs font-mono">{truncateAddress(pairData.pairAddress)}</span>
-                      <a
-                        href={`https://solscan.io/account/${pairData.pairAddress}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-1 text-blue-400 hover:text-blue-300"
-                      >
-                        <ExternalLink size={10} />
-                      </a>
-                    </div>
-                  </div>
-
-                  {fetchingOwner ? (
-                    <div className="flex items-center justify-center py-1">
-                      <Loader2 size={10} className="animate-spin mr-1" />
-                      <span className="text-2xs text-gray-400">Fetching program ID...</span>
-                    </div>
-                  ) : poolOwnerInfo ? (
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xs text-gray-400">Program ID:</span>
-                      <div className="flex items-center">
-                        <span className="text-2xs font-mono">{truncateAddress(poolOwnerInfo.owner)}</span>
-                        <a
-                          href={`https://solscan.io/account/${poolOwnerInfo.owner}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="ml-1 text-blue-400 hover:text-blue-300"
-                        >
-                          <ExternalLink size={10} />
-                        </a>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {fetchingOwner ? null : poolOwnerInfo ? (
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xs text-gray-400">Program:</span>
-                      <span
-                        className="text-2xs font-medium"
-                        style={{ color: poolOwnerInfo.programName === "Unknown Program" ? "#888" : "#4ade80" }}
-                      >
-                        {poolOwnerInfo.programName}
-                      </span>
-                    </div>
-                  ) : null}
+                <div className="text-2xs text-gray-400">
+                  {currentStrategy?.description || "No description available"}
                 </div>
               </div>
-            )}
+
+              <button
+                className="p-1 hover:bg-gray-800 rounded-md disabled:opacity-50"
+                onClick={() => cycleStrategyMode("next")}
+                disabled={botRunning}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
           </div>
         </Card>
       )}
 
-      {/* Only show the rest of the UI if a pair is selected */}
-      {pairSelected && (
-        <>
-          {/* Strategy Selection Widget with null check */}
-          {strategyModes && strategyModes.length > 0 && (
-            <Card className="card-gradient mb-3">
-              <div className="p-3">
-                <div className="text-xs text-gray-400 mb-1">Volume Strategy</div>
-                <div className="flex items-center justify-between bg-gray-900/50 rounded-md p-2">
-                  <button
-                    className="p-1 hover:bg-gray-800 rounded-md disabled:opacity-50"
-                    onClick={() => cycleStrategyMode("prev")}
-                    disabled={botRunning}
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-
-                  <div className="flex-1 text-center">
-                    <div className="text-xs font-medium" style={{ color: currentStrategy?.color || "#888" }}>
-                      {currentStrategy?.name || "Unknown Strategy"}
-                    </div>
-                    <div className="text-2xs text-gray-400">
-                      {currentStrategy?.description || "No description available"}
-                    </div>
-                  </div>
-
-                  <button
-                    className="p-1 hover:bg-gray-800 rounded-md disabled:opacity-50"
-                    onClick={() => cycleStrategyMode("next")}
-                    disabled={botRunning}
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-            </Card>
+      <div className="mb-3">
+        <Button
+          className={`w-full py-1.5 px-4 rounded-md flex items-center justify-center gap-2 transition-colors text-xs ${
+            botRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
+          } relative z-20`} // Added z-20 to ensure it's above any overlays
+          onClick={
+            botRunning ? () => toggleBotRunning(selectedPlatform, config.strategyMode, config) : handleStartClick
+          }
+          disabled={isLoading || fetchingData || isLoadingState}
+        >
+          {isLoading || fetchingData || isLoadingState ? (
+            <>
+              <Loader2 size={14} className="animate-spin" />
+              <span>{fetchingData ? "Fetching Token Data..." : "Loading..."}</span>
+            </>
+          ) : botRunning ? (
+            <>
+              <Square size={14} />
+              <span>Stop Bot</span>
+            </>
+          ) : (
+            <>
+              <Play size={14} />
+              <span>Start Bot</span>
+            </>
           )}
+        </Button>
+      </div>
 
-          <div className="mb-3">
-            <Button
-              className={`w-full py-1.5 px-4 rounded-md flex items-center justify-center gap-2 transition-colors text-xs ${
-                botRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
-              } relative z-20`} // Added z-20 to ensure it's above any overlays
-              onClick={
-                botRunning ? () => toggleBotRunning(selectedPlatform, config.strategyMode, config) : handleStartClick
-              }
-              disabled={isLoading || fetchingData || isLoadingState}
-            >
-              {isLoading || fetchingData || isLoadingState ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  <span>{fetchingData ? "Fetching Token Data..." : "Loading..."}</span>
-                </>
-              ) : botRunning ? (
-                <>
-                  <Square size={14} />
-                  <span>Stop Bot</span>
-                </>
-              ) : (
-                <>
-                  <Play size={14} />
-                  <span>Start Bot</span>
-                </>
-              )}
-            </Button>
-          </div>
+      <div className="mb-3">
+        <button className="text-xs text-blue-400 hover:underline" onClick={() => setShowAdvanced(!showAdvanced)}>
+          {showAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
+        </button>
+      </div>
 
-          <div className="mb-3">
-            <button className="text-xs text-blue-400 hover:underline" onClick={() => setShowAdvanced(!showAdvanced)}>
-              {showAdvanced ? "Hide Advanced Settings" : "Show Advanced Settings"}
-            </button>
-          </div>
+      {showAdvanced && (
+        <Card className="card-gradient">
+          <div className="p-3 space-y-3">
+            <div>
+              <label htmlFor="minTradeAmount" className="block text-xs text-gray-400 mb-1">
+                Min Trade Amount (SOL)
+              </label>
+              <Input
+                id="minTradeAmount"
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                className="compact-input"
+                value={config.minTradeAmount}
+                onChange={(e) => handleConfigChange("minTradeAmount", Number.parseFloat(e.target.value))}
+                disabled={botRunning || currentStrategy?.config.minTradeAmount.editable === false}
+              />
+            </div>
 
-          {showAdvanced && (
-            <Card className="card-gradient">
-              <div className="p-3 space-y-3">
-                <div>
-                  <label htmlFor="minTradeAmount" className="block text-xs text-gray-400 mb-1">
-                    Min Trade Amount (SOL)
-                  </label>
-                  <Input
-                    id="minTradeAmount"
-                    type="number"
-                    step="0.0001"
-                    min="0.0001"
-                    className="compact-input"
-                    value={config.minTradeAmount}
-                    onChange={(e) => handleConfigChange("minTradeAmount", Number.parseFloat(e.target.value))}
-                    disabled={botRunning || currentStrategy?.config.minTradeAmount.editable === false}
-                  />
-                </div>
+            <div>
+              <label htmlFor="maxTradeAmount" className="block text-xs text-gray-400 mb-1">
+                Max Trade Amount (SOL)
+              </label>
+              <Input
+                id="maxTradeAmount"
+                type="number"
+                step="0.0001"
+                min="0.0001"
+                className="compact-input"
+                value={config.maxTradeAmount}
+                onChange={(e) => handleConfigChange("maxTradeAmount", Number.parseFloat(e.target.value))}
+                disabled={botRunning || currentStrategy?.config.maxTradeAmount.editable === false}
+              />
+            </div>
 
-                <div>
-                  <label htmlFor="maxTradeAmount" className="block text-xs text-gray-400 mb-1">
-                    Max Trade Amount (SOL)
-                  </label>
-                  <Input
-                    id="maxTradeAmount"
-                    type="number"
-                    step="0.0001"
-                    min="0.0001"
-                    className="compact-input"
-                    value={config.maxTradeAmount}
-                    onChange={(e) => handleConfigChange("maxTradeAmount", Number.parseFloat(e.target.value))}
-                    disabled={botRunning || currentStrategy?.config.maxTradeAmount.editable === false}
-                  />
-                </div>
+            <div>
+              <label htmlFor="tradesPerInterval" className="block text-xs text-gray-400 mb-1">
+                Trades Per Minute
+              </label>
+              <Input
+                id="tradesPerInterval"
+                type="number"
+                step="1"
+                min="1"
+                className="compact-input"
+                value={config.tradesPerInterval}
+                onChange={(e) => handleConfigChange("tradesPerInterval", Number.parseInt(e.target.value))}
+                disabled={botRunning || currentStrategy?.config.tradesPerInterval.editable === false}
+              />
+            </div>
 
-                <div>
-                  <label htmlFor="tradesPerInterval" className="block text-xs text-gray-400 mb-1">
-                    Trades Per Minute
-                  </label>
-                  <Input
-                    id="tradesPerInterval"
-                    type="number"
-                    step="1"
-                    min="1"
-                    className="compact-input"
-                    value={config.tradesPerInterval}
-                    onChange={(e) => handleConfigChange("tradesPerInterval", Number.parseInt(e.target.value))}
-                    disabled={botRunning || currentStrategy?.config.tradesPerInterval.editable === false}
-                  />
-                </div>
+            <div>
+              <label htmlFor="intervalMinutes" className="block text-xs text-gray-400 mb-1">
+                Duration (Hrs)
+              </label>
+              <Input
+                id="intervalMinutes"
+                type="number"
+                step="0.1"
+                min="0.1"
+                className="compact-input"
+                value={config.intervalMinutes}
+                onChange={(e) => handleConfigChange("intervalMinutes", Number.parseFloat(e.target.value))}
+                disabled={botRunning || currentStrategy?.config.intervalMinutes.editable === false}
+              />
+            </div>
 
-                <div>
-                  <label htmlFor="intervalMinutes" className="block text-xs text-gray-400 mb-1">
-                    Duration (Hrs)
-                  </label>
-                  <Input
-                    id="intervalMinutes"
-                    type="number"
-                    step="0.1"
-                    min="0.1"
-                    className="compact-input"
-                    value={config.intervalMinutes}
-                    onChange={(e) => handleConfigChange("intervalMinutes", Number.parseFloat(e.target.value))}
-                    disabled={botRunning || currentStrategy?.config.intervalMinutes.editable === false}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="numberOfBuys" className="text-xs text-gray-400">
-                      Number of Buys
-                    </Label>
-                    <Input
-                      id="numberOfBuys"
-                      type="number"
-                      min="0"
-                      value={config.numberOfBuys}
-                      onChange={(e) => handleConfigChange("numberOfBuys", Number.parseInt(e.target.value))}
-                      className="compact-input mt-1"
-                    />
-                    <p className="text-2xs text-gray-500 mt-1">Number of buy transactions</p>
-                  </div>
-                  <div>
-                    <Label htmlFor="numberOfSells" className="text-xs text-gray-400">
-                      Number of Sells
-                    </Label>
-                    <Input
-                      id="numberOfSells"
-                      type="number"
-                      min="0"
-                      value={config.numberOfSells}
-                      onChange={(e) => handleConfigChange("numberOfSells", Number.parseInt(e.target.value))}
-                      className="compact-input mt-1"
-                    />
-                    <p className="text-2xs text-gray-500 mt-1">Number of sell transactions</p>
-                  </div>
-                </div>
-
-                <div>
-                  <Button className="w-full py-1.5 px-4 compact-button" onClick={saveBotConfig} disabled={botRunning}>
-                    Save Settings
-                  </Button>
-                </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="numberOfBuys" className="text-xs text-gray-400">
+                  Number of Buys
+                </Label>
+                <Input
+                  id="numberOfBuys"
+                  type="number"
+                  min="0"
+                  value={config.numberOfBuys}
+                  onChange={(e) => handleConfigChange("numberOfBuys", Number.parseInt(e.target.value))}
+                  className="compact-input mt-1"
+                />
+                <p className="text-2xs text-gray-500 mt-1">Number of buy transactions</p>
               </div>
-            </Card>
-          )}
-        </>
+              <div>
+                <Label htmlFor="numberOfSells" className="text-xs text-gray-400">
+                  Number of Sells
+                </Label>
+                <Input
+                  id="numberOfSells"
+                  type="number"
+                  min="0"
+                  value={config.numberOfSells}
+                  onChange={(e) => handleConfigChange("numberOfSells", Number.parseInt(e.target.value))}
+                  className="compact-input mt-1"
+                />
+                <p className="text-2xs text-gray-500 mt-1">Number of sell transactions</p>
+              </div>
+            </div>
+
+            <div>
+              <Button className="w-full py-1.5 px-4 compact-button" onClick={saveBotConfig} disabled={botRunning}>
+                Save Settings
+              </Button>
+            </div>
+          </div>
+        </Card>
       )}
 
       {/* Volume Calculation Dialog */}
