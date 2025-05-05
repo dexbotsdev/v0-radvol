@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { TradingApiService } from "@/lib/api/trading-api-service"
 
 interface ConfigDialogProps {
   onClose: () => void
@@ -17,6 +18,7 @@ export function ConfigDialog({ onClose, onOpenSettings }: ConfigDialogProps) {
   const [fundingWalletKey, setFundingWalletKey] = useState("")
   const [showMainKey, setShowMainKey] = useState(false)
   const [showFundingKey, setShowFundingKey] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // Load saved keys on mount
   useEffect(() => {
@@ -32,8 +34,10 @@ export function ConfigDialog({ onClose, onOpenSettings }: ConfigDialogProps) {
     onClose() // Close the dropdown menu
   }
 
-  const handleSaveKeys = () => {
+  const handleSaveKeys = async () => {
     try {
+      setIsSaving(true)
+
       // Validate keys (basic validation - in a real app you'd want more robust validation)
       if (mainWalletKey && mainWalletKey.length < 32) {
         toast({
@@ -53,7 +57,7 @@ export function ConfigDialog({ onClose, onOpenSettings }: ConfigDialogProps) {
         return
       }
 
-      // Save to localStorage (in a real app, you'd want more secure storage)
+      // Save to localStorage for immediate use in the UI
       if (mainWalletKey) {
         localStorage.setItem("mainWalletPrivateKey", mainWalletKey)
       }
@@ -62,17 +66,24 @@ export function ConfigDialog({ onClose, onOpenSettings }: ConfigDialogProps) {
         localStorage.setItem("fundingWalletPrivateKey", fundingWalletKey)
       }
 
-      toast({
-        title: "Keys Saved",
-        description: "Your wallet keys have been saved",
+      // Save to backend via API
+      const response = await TradingApiService.saveConfig({
+        mainWalletKey,
+        fundingWalletKey,
       })
+
+      if (!response.success) {
+        throw new Error(response.error || "Failed to save configuration")
+      }
     } catch (error) {
       console.error("Error saving keys:", error)
       toast({
         title: "Error",
-        description: "Failed to save wallet keys",
+        description: "Failed to save wallet keys to server",
         variant: "destructive",
       })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -138,9 +149,16 @@ export function ConfigDialog({ onClose, onOpenSettings }: ConfigDialogProps) {
           <Button
             onClick={handleSaveKeys}
             className="w-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-2"
+            disabled={isSaving}
           >
-            <Save size={14} />
-            Save Keys
+            {isSaving ? (
+              "Saving..."
+            ) : (
+              <>
+                <Save size={14} />
+                Save Keys
+              </>
+            )}
           </Button>
         </div>
       </div>

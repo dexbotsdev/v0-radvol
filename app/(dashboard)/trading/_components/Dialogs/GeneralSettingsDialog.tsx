@@ -1,6 +1,8 @@
 "use client"
 import { useState } from "react"
 import { X, Save } from "lucide-react"
+import { TradingApiService } from "@/lib/api/trading-api-service"
+import { toast } from "sonner"
 
 interface GeneralSettingsDialogProps {
   onClose: () => void
@@ -10,11 +12,29 @@ export function GeneralSettingsDialog({ onClose }: GeneralSettingsDialogProps) {
   const [rpcUrl, setRpcUrl] = useState("https://api.mainnet-beta.solana.com")
   const [privateKey, setPrivateKey] = useState("")
   const [showPrivateKey, setShowPrivateKey] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
-  const handleSave = () => {
-    // In a real app, this would save to backend or localStorage
-    console.log("Saving general settings:", { rpcUrl, privateKey })
-    onClose()
+  const handleSave = async () => {
+    try {
+      setIsSaving(true)
+
+      // Call API to save RPC info
+      const response = await TradingApiService.saveRPCInfo({
+        rpcUrl,
+        privateKey,
+      })
+
+      if (!response.success) {
+        throw new Error(response.error || "Failed to save RPC settings")
+      }
+
+      onClose()
+    } catch (error) {
+      console.error("Error saving RPC settings:", error)
+      toast.error("Failed to save RPC settings")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -72,9 +92,10 @@ export function GeneralSettingsDialog({ onClose }: GeneralSettingsDialogProps) {
           <button
             onClick={handleSave}
             className="px-4 py-2 text-sm bg-[#FF8C00] text-white rounded hover:bg-[#FF7C00] flex items-center"
+            disabled={isSaving}
           >
             <Save size={16} className="mr-1" />
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>

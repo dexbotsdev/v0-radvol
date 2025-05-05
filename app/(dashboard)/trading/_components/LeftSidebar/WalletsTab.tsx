@@ -1,12 +1,14 @@
 "use client"
-import { Plus, DollarSign, Trash2, WalletIcon, AlertCircle } from "lucide-react"
+import { Plus, DollarSign, Trash2, WalletIcon, AlertCircle, Loader2 } from "lucide-react"
 import type { Wallet as WalletType } from "../../types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { TradingApiService } from "@/lib/api/trading-api-service"
+import { toast } from "sonner"
 
 export function WalletsTab({
   wallets,
@@ -14,9 +16,9 @@ export function WalletsTab({
   selectAll,
   botRunning,
   setWalletCount,
-  generateWallets,
-  fundWallets,
-  burnWallets,
+  generateWallets: originalGenerateWallets,
+  fundWallets: originalFundWallets,
+  burnWallets: originalBurnWallets,
   toggleSelectAll,
   toggleWalletSelection,
 }: {
@@ -32,7 +34,125 @@ export function WalletsTab({
   toggleWalletSelection: (id: string) => void
 }) {
   const [fundAmount, setFundAmount] = useState("0.01")
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isFunding, setIsFunding] = useState(false)
+  const [isBurning, setIsBurning] = useState(false)
   const selectedCount = wallets.filter((w) => w.selected).length
+
+  // Function to fetch wallets from API
+  const fetchWallets = async () => {
+    try {
+      const response = await TradingApiService.getWallets()
+      if (response.success && response.data) {
+        // Update wallets in parent component
+        // This would require a new prop to update wallets
+        // For now, we'll just log it
+        console.log("Fetched wallets:", response.data)
+      }
+    } catch (error) {
+      console.error("Error fetching wallets:", error)
+    }
+  }
+
+  // Generate wallets using API
+  const generateWallets = async () => {
+    try {
+      setIsGenerating(true)
+      const response = await TradingApiService.generateWallets({ count: walletCount })
+
+      if (response.success && response.data) {
+        // Call original function to update UI state
+        originalGenerateWallets()
+
+        // Alternatively, if the API returns the generated wallets:
+        // updateWallets(response.data)
+      } else {
+        toast.error("Failed to generate wallets")
+      }
+    } catch (error) {
+      console.error("Error generating wallets:", error)
+      toast.error("Failed to generate wallets")
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  // Fund wallets using API
+  const fundWallets = async () => {
+    try {
+      setIsFunding(true)
+
+      // Get funding wallet key from localStorage
+      const fundingWalletKey = localStorage.getItem("fundingWalletPrivateKey")
+      if (!fundingWalletKey) {
+        toast.error("Funding wallet private key not found")
+        return
+      }
+
+      // Get selected wallet IDs
+      const selectedWalletIds = wallets.filter((w) => w.selected).map((w) => w.id)
+      if (selectedWalletIds.length === 0) {
+        toast.error("No wallets selected")
+        return
+      }
+
+      const response = await TradingApiService.fundWallets({
+        walletIds: selectedWalletIds,
+        amount: Number(fundAmount),
+        fundingWalletKey,
+      })
+
+      if (response.success) {
+        // Call original function to update UI state
+        originalFundWallets()
+
+        // Refresh wallets to get updated balances
+        fetchWallets()
+      } else {
+        toast.error("Failed to fund wallets")
+      }
+    } catch (error) {
+      console.error("Error funding wallets:", error)
+      toast.error("Failed to fund wallets")
+    } finally {
+      setIsFunding(false)
+    }
+  }
+
+  // Burn wallets using API
+  const burnWallets = async () => {
+    try {
+      setIsBurning(true)
+
+      // Get selected wallet IDs
+      const selectedWalletIds = wallets.filter((w) => w.selected).map((w) => w.id)
+      if (selectedWalletIds.length === 0) {
+        toast.error("No wallets selected")
+        return
+      }
+
+      const response = await TradingApiService.burnWallets({
+        walletIds: selectedWalletIds,
+      })
+
+      if (response.success) {
+        // Call original function to update UI state
+        originalBurnWallets()
+      } else {
+        toast.error("Failed to burn wallets")
+      }
+    } catch (error) {
+      console.error("Error burning wallets:", error)
+      toast.error("Failed to burn wallets")
+    } finally {
+      setIsBurning(false)
+    }
+  }
+
+  // Fetch wallets on component mount
+  useEffect(() => {
+    fetchWallets()
+  }, [])
 
   return (
     <div className="relative">
@@ -88,12 +208,16 @@ export function WalletsTab({
                     size="sm"
                     variant="ghost"
                     className={`h-6 px-2 text-xs hover:bg-red-900/20 hover:text-red-400 ${
-                      botRunning || !wallets.some((w) => w.selected) ? "opacity-50" : "text-red-500"
+                      botRunning || !wallets.some((w) => w.selected) || isBurning ? "opacity-50" : "text-red-500"
                     }`}
-                    disabled={botRunning || !wallets.some((w) => w.selected)}
+                    disabled={botRunning || !wallets.some((w) => w.selected) || isBurning}
                   >
-                    <Trash2 size={12} className="mr-1" />
-                    Burn
+                    {isBurning ? (
+                      <Loader2 size={12} className="mr-1 animate-spin" />
+                    ) : (
+                      <Trash2 size={12} className="mr-1" />
+                    )}
+                    {isBurning ? "Burning..." : "Burn"}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
@@ -115,7 +239,7 @@ export function WalletsTab({
                   onChange={(e) => setWalletCount(Math.max(5, Number.parseInt(e.target.value) || 5))}
                   className="w-full h-7 bg-gray-900/70 border-gray-700/50 text-xs px-2"
                   min="5"
-                  disabled={botRunning}
+                  disabled={botRunning || isGenerating}
                 />
               </div>
               <TooltipProvider>
@@ -126,10 +250,14 @@ export function WalletsTab({
                       size="sm"
                       variant="secondary"
                       className="h-7 px-2 text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700"
-                      disabled={botRunning}
+                      disabled={botRunning || isGenerating}
                     >
-                      <Plus size={12} className="mr-1" />
-                      Generate
+                      {isGenerating ? (
+                        <Loader2 size={12} className="mr-1 animate-spin" />
+                      ) : (
+                        <Plus size={12} className="mr-1" />
+                      )}
+                      {isGenerating ? "Generating..." : "Generate"}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
@@ -150,7 +278,7 @@ export function WalletsTab({
                   className="w-full h-7 bg-gray-900/70 border-gray-700/50 text-xs pr-7 pl-2"
                   min="0.01"
                   step="0.01"
-                  disabled={botRunning}
+                  disabled={botRunning || isFunding}
                 />
                 <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-[10px] text-gray-400">
                   SOL
@@ -164,10 +292,14 @@ export function WalletsTab({
                       size="sm"
                       variant="secondary"
                       className="h-7 px-2 text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700"
-                      disabled={botRunning || !wallets.some((w) => w.selected)}
+                      disabled={botRunning || !wallets.some((w) => w.selected) || isFunding}
                     >
-                      <DollarSign size={12} className="mr-1" />
-                      Fund
+                      {isFunding ? (
+                        <Loader2 size={12} className="mr-1 animate-spin" />
+                      ) : (
+                        <DollarSign size={12} className="mr-1" />
+                      )}
+                      {isFunding ? "Funding..." : "Fund"}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
@@ -220,10 +352,14 @@ export function WalletsTab({
                 size="sm"
                 variant="ghost"
                 className="mt-2 h-7 text-xs"
-                disabled={botRunning}
+                disabled={botRunning || isGenerating}
               >
-                <Plus size={12} className="mr-1" />
-                Generate Wallets
+                {isGenerating ? (
+                  <Loader2 size={12} className="mr-1 animate-spin" />
+                ) : (
+                  <Plus size={12} className="mr-1" />
+                )}
+                {isGenerating ? "Generating..." : "Generate Wallets"}
               </Button>
             </div>
           )}

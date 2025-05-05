@@ -63,7 +63,13 @@
     "bip39": "latest",
     "ed25519-hd-key": "latest",
     "bs58": "latest",
-    "uuid": "latest"
+    "uuid": "latest",
+    "express": "latest",
+    "cors": "latest",
+    "body-parser": "latest",
+    "dotenv": "latest",
+    "sequelize": "latest",
+    "path": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",
